@@ -1,41 +1,56 @@
-import mongoose from "mongoose";
+import mongoose from "mongoose"
 
 const MONGODB_URL = process.env.MONGODB_URI;
+
+
+//  const connectMongoDB = async () => {
+//     if (mongoose.connection.readyState === 1) {
+//         return mongoose.connection.asPromise();
+//     }
+//     return await mongoose.connect(MONGODB_URL)
+// }
+
+// export default connectMongoDB
 
 if (!MONGODB_URL) {
     throw new Error(
         "Please define the MONGODB_URI environment variable inside .env.local"
-    );
+    )
 }
+
 
 let cached = global.mongoose;
 
 if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
+    cached = global.mongoose = { con: null, promise: null }
 }
 
 const dbConnect = async () => {
-    if (cached.conn === null || cached.conn === undefined) {
-        if (!cached.promise) {
-            const opts = {
-                useNewUrlParser: true,
-                useUnifiedTopology: true,
-                useCreateIndex: true,
-                bufferCommands: false,
-            };
-            console.log(opts)
-            cached.promise = mongoose
-                .connect(MONGODB_URL, opts)
-                .then((mongoose) => {
-                    console.log("Mongoose connected to MongoDB");
-                    return mongoose;
-                }).catch(err => console.log(err))
-        }
+    if (cached.conn) {
+        return cached.conn;
+    }
 
+
+    // If a connection does not exist, we check if a promise is already in progress. If a promise is already in progress, we wait for it to resolve to get the connection
+    if (!cached.promise) {
+        const opts = {
+            bufferCommands: false
+        };
+
+        console.log(cached.promise)
+        cached.promise = mongoose.connect(MONGODB_URL, opts).then((mongoose) => {
+            return mongoose
+        }).catch(err => console.log(err))
+    }
+
+    try {
         cached.conn = await cached.promise;
+    } catch (e) {
+        cached.promise = null;
+        throw e;
     }
 
     return cached.conn;
-};
+}
 
 export default dbConnect;

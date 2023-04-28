@@ -6,8 +6,9 @@ export async function POST(req, res) {
     try {
 
         const body = await req.json();
-        await dbConn();
 
+        await dbConn();
+        
         await Contact.create(body);
 
         return NextResponse.json({
