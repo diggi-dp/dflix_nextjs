@@ -26,7 +26,7 @@
 
 .navbarItem {
     height: 100%;
-    display: flex;
+    display: grid;
     place-items: center;
 }
 
